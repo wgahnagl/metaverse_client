@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblllogin.a CMakeFiles/lllogin.dir/lllogin.o
+/usr/bin/ranlib liblllogin.a
