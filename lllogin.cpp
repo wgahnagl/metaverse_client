@@ -23,10 +23,10 @@
  * $/LicenseInfo$
  */
 
-#include "llwin32headers.h"
-#include "linden_common.h"
-#include "llsd.h"
-#include "llsdutil.h"
+// #include "llwin32headers.h"
+// #include "linden_common.h"
+// #include "llsd.h"
+// #include "llsdutil.h"
 
 /*==========================================================================*|
 #ifdef LL_WINDOWS
@@ -39,12 +39,12 @@
 
 #include <boost/bind.hpp>
 
-#include "llcoros.h"
-#include "llevents.h"
-#include "lleventfilter.h"
-#include "lleventcoro.h"
-#include "llexception.h"
-#include "stringize.h"
+// #include "llcoros.h"
+// #include "llevents.h"
+// #include "lleventfilter.h"
+// #include "lleventcoro.h"
+// #include "llexception.h"
+// #include "stringize.h"
 
 //*********************
 // LLLogin
