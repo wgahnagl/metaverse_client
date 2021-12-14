@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 config = "0.11"
-metaverse_login = "0.0.2"
 metaverse_messages = {path = "../messages"}
+metaverse_login = "0.0.2"
 xmlrpc = "0.15.1"
 actix-web = "3"
 actix-rt = "2.5.0"

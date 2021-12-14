@@ -1,6 +1,6 @@
 use crate::models::errors::{LoginError, Reason};
 use crate::models::session_data::Session;
-use metaverse_messages::models::use_circuit_code::*;
+use metaverse_messages::use_circuit_code::use_circuit_code;
 
 use std::io;
 use tokio::net::UdpSocket;
@@ -43,14 +43,15 @@ pub async fn connect(session: Session) -> io::Result<()> {
     session_addr.push_str(&":".to_string());
     session_addr.push_str(&session.sim_port.unwrap().to_string());
     let sock = UdpSocket::bind("127.0.0.1:0").await?;
-    sock.connect(session_addr.clone()).await?;
 
-    let packet = create_use_circuit_code_packet(create_use_circuit_code(
+    use_circuit_code(
+        sock,
+        session_addr,
         session.circuit_code.unwrap(),
         session.session_id.unwrap(),
         session.agent_id.unwrap(),
-    ))
+    )
+    .await
     .unwrap();
-    sock.send(&packet).await?;
     Ok(())
 }
