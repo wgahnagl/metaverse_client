@@ -17,6 +17,8 @@ const OSGRID_PORT: u16 = 80;
 const OSGRID_URL: &'static str = "http://login.osgrid.org";
 const THIRDROCK_PORT: u16 = 8002;
 const THIRDROCK_URL: &'static str = "http://grid.3rdrockgrid.com";
+const LIBREPUNK_PORT: u16 = 9000;
+const LIBREPUNK_URL: &'static str = "http://test.librepunk.club";
 
 struct Reap(Child);
 impl Drop for Reap {
@@ -287,6 +289,32 @@ fn establish_conn() {
     );
     let session = new_session(login_response);
     tokio_test::block_on(connect(session.unwrap())).unwrap();
+}
+
+#[test]
+fn establish_conn_librepunk() {
+    let creds = match read_creds() {
+        Some(x) => x,
+        None => {
+            println!("test skipped, no creds file");
+            return;
+        }
+    };
+
+    let login_response = login_with_defaults(
+        env!("CARGO_CRATE_NAME").to_string(),
+        creds.get("librepunkfirst").unwrap().to_string(),
+        creds.get("librepunklast").unwrap().to_string(),
+        creds.get("librepunkpasswd").unwrap().to_string(),
+        creds.get("librepunkstart").unwrap().to_string(),
+        true,
+        true,
+        build_test_url(LIBREPUNK_URL, LIBREPUNK_PORT),
+    );
+
+    let session = new_session(login_response);
+    println!("{:?}", session);
+    //tokio_test::block_on(connect(session.unwrap())).unwrap();
 }
 
 fn read_creds() -> Option<HashMap<String, String>> {
