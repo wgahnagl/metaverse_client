@@ -1,3 +1,4 @@
+use byteorder::ReadBytesExt;
 use glam::Vec3;
 use std::io::{Cursor, Read};
 use uuid::Uuid;
@@ -31,12 +32,12 @@ impl Packet {
 #[derive(Debug, Clone)]
 /// Avatar Appearance struct
 pub struct AvatarAppearance {
-    id: Uuid,
-    is_trial: bool,
-    texture_entry: String,
-    visual_params: VisualParam,
-    appearance_data: Vec<AppearanceData>,
-    hover_height: Vec3,
+    pub id: Uuid,
+    pub is_trial: bool,
+    pub texture_entry: String,
+    pub visual_params: VisualParam,
+    pub appearance_data: Vec<AppearanceData>,
+    pub hover_height: Vec3,
 }
 
 #[derive(Debug, Clone)]
@@ -53,13 +54,19 @@ pub struct AppearanceData {
 impl PacketData for AvatarAppearance {
     fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {
         let mut cursor = Cursor::new(bytes);
+        
         let mut id_bytes = [0u8; 16];
         cursor.read_exact(&mut id_bytes)?;
         let id = Uuid::from_bytes(id_bytes);
 
+        let is_trial = cursor.read_u8()? != 0;
+
+
+
+
         Ok(AvatarAppearance {
             id,
-            is_trial: false,
+            is_trial,
             texture_entry: "".to_string(),
             visual_params: VisualParam {},
             appearance_data: vec![AppearanceData {
