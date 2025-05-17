@@ -3,9 +3,9 @@ use metaverse_messages::utils::object_types::ObjectType;
 use uuid::Uuid;
 
 /// Sends a call to the ViewerAsset endpoint to retrieve the object using the object's asset ID.
-/// Creates a get request in the format of 
-/// http://<UUID OF VIEWERASSET ENDPOINT>?<OBJECT TYPE>_id=<ASSET ID> 
-/// for example 
+/// Creates a get request in the format of
+/// http://<UUID OF VIEWERASSET ENDPOINT>?<OBJECT TYPE>_id=<ASSET ID>
+/// for example
 /// http://da4b15ea-1d97-4140-afe3-2dd1ce5560710000?bodypart_id=da4b15ea-1d97-4140-afe3-2dd1ce5560710000
 /// If successful, this returns bytes that contain the object's information.
 pub async fn download_asset(

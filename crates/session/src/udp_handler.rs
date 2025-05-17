@@ -119,8 +119,8 @@ impl Mailbox {
             }
         }
     }
-    /// Set the state of the mailbox. 
-    /// Determines if it's running or started or stopped. 
+    /// Set the state of the mailbox.
+    /// Determines if it's running or started or stopped.
     pub fn set_state(&mut self, new_state: ServerState, _ctx: &mut Context<Self>) {
         let state_clone = Arc::clone(&self.state);
         {

@@ -218,7 +218,7 @@ pub enum ServerState {
 #[derive(Debug, Message)]
 #[rtype(result = "()")]
 /// Called when the inventory needs to be refreshed. Does a full fetch of the inventory and
-/// rebuilds the inventory folders on the disk. 
+/// rebuilds the inventory folders on the disk.
 pub struct RefreshInventoryEvent {
     /// The agent ID for the inventory refresh. Determines which endpoint to use. If it's the
     /// current user, fetch the FetchInventoryDescendents2. If it isn't, fetch from the
@@ -535,6 +535,17 @@ impl Handler<ObjectUpdate> for Mailbox {
             ObjectType::Avatar | ObjectType::Bodypart | ObjectType::Clothing => {
                 #[cfg(feature = "agent")]
                 if let Some(session) = &self.session {
+                    if session
+                        .inventory_data
+                        .inventory_tree
+                        .as_ref()
+                        .map(|tree| tree.children.contains_key(&ObjectType::CurrentOutfit))
+                        .unwrap_or(false)
+                    {
+
+                        // Do something
+                    }
+
                     let capability_urls = session.capability_urls.clone();
                     ctx.spawn(
                         async move {
