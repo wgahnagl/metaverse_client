@@ -6,6 +6,7 @@ use log::info;
 use metaverse_messages::ui::errors::MailboxSessionError;
 use metaverse_messages::ui::errors::SessionError;
 use std::collections::HashMap;
+use std::fs;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -59,6 +60,49 @@ pub async fn initialize(
 ) -> Result<JoinHandle<()>, SessionError> {
     let notify = Arc::new(Notify::new());
     let state = Arc::new(Mutex::new(ServerState::Starting));
+
+    #[cfg(feature = "agent")]
+    // store the agent skeleton in the share dir.
+    // TODO: fix this so it sucks less
+    match initialize_share_dir() {
+        Ok(share_path) => {
+            let mut gltf_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            // Go up from crate dir to workspace root, assuming `local_share` is there
+            gltf_path.pop(); // one level up to workspace root
+            gltf_path.push("agent");
+            gltf_path.push("src");
+            gltf_path.push("benthic_default_model");
+            gltf_path.push("skeleton.gltf");
+
+            let mut bin_path = gltf_path.clone();
+            bin_path.pop();
+            bin_path.push("skeleton.bin");
+
+            let mut gltf_dest_path = share_path.clone();
+            gltf_dest_path.push("skeleton.gltf");
+
+            let mut bin_dest_path = share_path.clone();
+            bin_dest_path.push("skeleton.bin");
+
+            // Copy the file
+            if let Err(e) = fs::copy(&gltf_path, &gltf_dest_path) {
+                eprintln!("Failed to copy skeleton.gltf: {:?}", e);
+            } else {
+                println!("Copied skeleton.gltf to {:?}", gltf_dest_path);
+            }
+
+            // Copy the file
+            if let Err(e) = fs::copy(&bin_path, &bin_dest_path) {
+                eprintln!("Failed to copy skeleton.bin: {:?}", e);
+            } else {
+                println!("Copied skeleton.bin to {:?}", bin_dest_path);
+            }
+        }
+        Err(e) => error!(
+            "Failed to initialize share dir. Running without cache. {:?}",
+            e
+        ),
+    };
 
     let mailbox = Mailbox {
         client_socket: pick_unused_port().unwrap(),

@@ -121,8 +121,7 @@ impl MeshGeometry {
             let zf = position_domain_min.z
                 + (z as f32 / 65535.0) * (position_domain_max.z - position_domain_min.z);
 
-            //TODO: SCALE THIS PROPERLY. THIS 5.0 IS WRONG
-            positions.push(Vec3::new(xf / 5.0, yf, -zf));
+            positions.push(Vec3::new(xf, yf, -zf));
         }
 
         // Parse triangle indices

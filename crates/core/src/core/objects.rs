@@ -1,4 +1,5 @@
 use actix::{AsyncContext, Handler, Message};
+use glam::Vec3;
 use log::{info, warn};
 use metaverse_messages::capabilities::item::Item;
 use metaverse_messages::{
@@ -8,7 +9,7 @@ use metaverse_messages::{
 use std::time::Duration;
 use uuid::Uuid;
 
-use super::agent::{AgentAppearance, DownloadAgentAsset};
+use super::agent::{Avatar, DownloadAgentAsset};
 use super::session::Mailbox;
 
 #[derive(Debug, Message)]
@@ -33,8 +34,8 @@ impl Handler<ObjectUpdate> for Mailbox {
                 | ObjectType::Unknown
                 | ObjectType::ParticleSystem
                 | ObjectType::NewTree => {
-                    #[cfg(feature = "environment")]
-                    info!("Received environment data");
+                    //#[cfg(feature = "environment")]
+                    //info!("Received environment data");
                 }
                 ObjectType::Avatar => {
                     #[cfg(feature = "agent")]
@@ -52,8 +53,9 @@ impl Handler<ObjectUpdate> for Mailbox {
                             {
                                 session.agent_list.lock().unwrap().insert(
                                     msg.full_id,
-                                    AgentAppearance {
+                                    Avatar {
                                         agent_id: msg.full_id,
+                                        position: msg.motion_data.position,
                                         // the size of the outfit is half of the size of the
                                         // currently worn folder. This is because the currently
                                         // worn folder is full of simlinks and the real objects.
