@@ -11,18 +11,18 @@ use gltf_json::{
     },
 };
 use log::{info, warn};
-use metaverse_messages::capabilities::scene::SceneGroup;
+use metaverse_messages::utils::skeleton::JointName;
+use metaverse_messages::{capabilities::scene::SceneGroup, utils::skeleton::Skeleton};
 use rgb::bytemuck;
-use std::{borrow::Cow, fs::File, mem, path::PathBuf};
-use std::{
-    collections::{BTreeMap, HashMap, HashSet},
-    f32::consts::FRAC_1_SQRT_2,
-};
+use std::str::FromStr;
+use std::{borrow::Cow, collections::HashMap, fs::File, mem, path::PathBuf};
+use std::{collections::BTreeMap, f32::consts::FRAC_1_SQRT_2};
 
 /// This generates a GLTF file and a MeshUpdate for a scenegroup object. This handles the skeleton,
 /// mesh deforms, etc.
 pub fn generate_avatar_from_scenegroup(
     scene_group: SceneGroup,
+    skeleton: Skeleton,
     skeleton_path: PathBuf,
     path: PathBuf,
 ) -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -30,6 +30,11 @@ pub fn generate_avatar_from_scenegroup(
     let mut raw_buffer = Vec::new();
     let mut nodes = Vec::new();
     let high_path = path.join(format!("{}_high.glb", scene_group.parts[0].name));
+    
+    for (joint_name, joint) in skeleton.joints{
+        println!("name: {:?}", joint_name);
+        println!("local_transforms{:?}", joint.local_transforms);
+    }
 
     let buffer = root.push(gltf_json::Buffer {
         byte_length: USize64::from(0_usize),
@@ -59,7 +64,11 @@ pub fn generate_avatar_from_scenegroup(
     let mut joints = Vec::new();
     for (i, joint_node) in skin.joints().enumerate() {
         if let Some(name) = joint_node.name() {
-            if root_mesh.skin.joint_names.contains(name) {
+            if root_mesh
+                .skin
+                .joint_names
+                .contains(&JointName::from_str(name)?)
+            {
                 skin_joint_indices.push(i);
                 joints.push(joint_node.index());
             }
@@ -138,7 +147,7 @@ pub fn generate_avatar_from_scenegroup(
                 // TODO: you should not be checking against strings like this
                 if let Some(node) = document.nodes().nth(parent) {
                     if let Some(name) = node.name() {
-                        root_mesh.skin.joint_names.insert(name.to_string());
+                        root_mesh.skin.joint_names.push(JointName::from_str(name)?);
                     }
                 }
                 // add the identity matrix to maintain IBM alignment
@@ -304,6 +313,8 @@ pub fn generate_avatar_from_scenegroup(
             node.rotation = Some(UnitQuaternion([
                 rotation.x, rotation.y, rotation.z, rotation.w,
             ]));
+            println!("name: {:?}", node.name);
+            println!("correct local transforms: {:?}", mat);
         } else {
             let (scale, rotation, translation) = ibm_matrices[i].to_scale_rotation_translation();
             node.scale = Some([scale.x, scale.y, scale.z]);
@@ -313,6 +324,7 @@ pub fn generate_avatar_from_scenegroup(
             node.translation = Some([translation.x, translation.y, translation.z]);
         }
     }
+
 
     root.skins.push(Skin {
         joints: new_joints,
@@ -571,7 +583,7 @@ fn add_node_recursive(
     root: &mut gltf_json::Root,
     joint_index_map: &mut HashMap<usize, usize>,
     node_index: usize,
-    allowed_joints: &HashSet<String>,
+    allowed_joints: &Vec<JointName>,
 ) -> Option<usize> {
     if let Some(&existing_index) = joint_index_map.get(&node_index) {
         return Some(existing_index);
@@ -582,7 +594,7 @@ fn add_node_recursive(
         .expect("Node index out of range");
 
     if let Some(name) = node.name() {
-        if !allowed_joints.contains(name) {
+        if !allowed_joints.contains(&JointName::from_str(name).unwrap()) {
             return None;
         }
     } else {

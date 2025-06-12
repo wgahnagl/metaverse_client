@@ -1,57 +1,35 @@
-use std::{collections::HashMap, sync::Arc};
-
 use super::session::{Mailbox, UiMessage};
 use crate::{
     http_handler::{download_item, download_mesh, download_object},
     initialize::{create_sub_share_dir, initialize_skeleton},
 };
 use actix::{Addr, AsyncContext, Handler, Message, WrapFuture};
-use glam::Vec3;
+use glam::{Vec3, Vec4};
 use log::error;
-use metaverse_agent::generate_gltf::generate_avatar_from_scenegroup;
+use metaverse_agent::{
+    avatar::{Avatar, OutfitObject, RiggedObject},
+    generate_gltf::generate_avatar_from_scenegroup,
+};
 use metaverse_messages::{
-    capabilities::{item::Item, scene::SceneGroup},
+    capabilities::scene::SceneObject,
+    utils::skeleton::{Joint, JointName, Skeleton, Transform},
+};
+use metaverse_messages::{
     ui::{
         mesh_update::{MeshType, MeshUpdate},
         ui_events::UiEventTypes,
     },
-    utils::{
-        item_metadata::{self, ItemMetadata},
-        object_types::ObjectType,
-    },
+    utils::{item_metadata::ItemMetadata, object_types::ObjectType},
 };
-use std::sync::Mutex;
+use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashSet, sync::Mutex};
 use uuid::Uuid;
 
 #[cfg(feature = "agent")]
 #[derive(Debug, Message, Clone)]
 #[rtype(result = "()")]
-/// This contains information about the agent appearances as they come into the scene.
-/// this is used to collect agent items, and trigger generation of the GLTF once their assets have
-/// been loaded.
-pub struct Avatar {
-    /// The UUID of the agent
-    pub agent_id: Uuid,
-    /// How many items are being requested. When the appearance is fully loaded, the outfit_size
-    /// and outfit_items will be of equal length.
-    pub outfit_size: usize,
-    /// The items in the outfit. Contains mesh and other data that will be used to construct the
-    /// gltf file.
-    pub outfit_items: Vec<OutfitObject>,
-    /// The position of the agent in the world
-    pub position: Vec3,
-}
-
-#[cfg(feature = "agent")]
-#[derive(Debug, Message, Clone)]
-#[rtype(result = "()")]
-/// The items that can be stored in an outfit. It can contain generic Items, or SceneGroups, which
-/// contain mesh data.
-pub enum OutfitObject {
-    /// A generic item
-    Item(Item),
-    /// A SceneGroup, containing mesh and render data
-    SceneGroup(SceneGroup),
+pub struct Agent {
+    pub avatar: Avatar,
 }
 
 #[derive(Debug, Message)]
@@ -92,10 +70,19 @@ impl Handler<DownloadAgentAsset> for Mailbox {
                                         }
                                     };
                                 }
+                                let skeleton = create_skeleton(
+                                    scene_group.parts[0].clone(),
+                                    agent_list.clone(),
+                                    msg.agent_id,
+                                )
+                                .unwrap();
                                 add_item_to_agent_list(
                                     agent_list,
                                     msg.agent_id,
-                                    OutfitObject::SceneGroup(scene_group),
+                                    OutfitObject::RiggedObject(RiggedObject {
+                                        scene_group,
+                                        skeleton,
+                                    }),
                                     address,
                                 );
                             }
@@ -125,6 +112,95 @@ impl Handler<DownloadAgentAsset> for Mailbox {
     }
 }
 
+fn create_skeleton(
+    scene_root: SceneObject,
+    agent_list: Arc<Mutex<HashMap<Uuid, Avatar>>>,
+    agent_id: Uuid,
+) -> Option<Skeleton> {
+    if let Some(mesh) = &scene_root.sculpt.mesh {
+        let mut joints = HashMap::new();
+        let valid_names: HashSet<_> = mesh.skin.joint_names.iter().cloned().collect();
+
+        for (i, name) in mesh.skin.joint_names.iter().enumerate() {
+            if let Some(agent) = agent_list.lock().unwrap().get_mut(&agent_id) {
+                let default_joints = agent.skeleton.joints.get(name).unwrap().clone();
+
+                // apply the rotations from the default skeleton to the object
+                let mut default_transform = default_joints.transforms[0].transform.clone();
+                default_transform.w_axis = Vec4::new(0.0, 0.0, 0.0, 1.0);
+                let transform_matrix = default_transform * mesh.skin.inverse_bind_matrices[i];
+
+                let transform = Transform {
+                    name: scene_root.name.clone(),
+                    id: scene_root.sculpt.texture,
+                    transform: transform_matrix,
+                };
+
+                // create the joint object that contians the calculted transforms
+                let joint = Joint {
+                    name: name.clone(),
+                    parent: default_joints.parent.filter(|p| valid_names.contains(p)),
+                    children: default_joints
+                        .children
+                        .into_iter()
+                        .filter(|p| valid_names.contains(p))
+                        .collect(),
+                    transforms: vec![transform.clone()],
+                    local_transforms: vec![],
+                };
+                joints.insert(*name, joint);
+
+                // update the global skeleton with the transforms
+                if let Some(joint) = agent.skeleton.joints.get_mut(name) {
+                    // Ignore transforms that are already applied
+                    let already_exists = joint
+                        .transforms
+                        .iter()
+                        .any(|t| t.transform.abs_diff_eq(transform.transform, 1e-4));
+                    if !already_exists {
+                        joint.transforms.push(transform);
+                    }
+                }
+            };
+        }
+        // create a skeleton that contains the root nodes
+        let root_joints: Vec<JointName> = joints
+            .values()
+            .filter(|joint| joint.parent.is_none())
+            .map(|joint| joint.name.clone())
+            .collect();
+
+        let parent_transforms_map: HashMap<_, _> = joints
+            .iter()
+            .map(|(name, joint)| (name.clone(), joint.transforms.clone()))
+            .collect();
+
+        for joint in joints.values_mut() {
+            if let Some(parent) = &joint.parent {
+                if let Some(parent_transforms) = parent_transforms_map.get(parent) {
+                    for (i, parent_transform) in parent_transforms.iter().enumerate() {
+                        let mut base_transform = joint.transforms[i].clone();
+                        base_transform.transform =
+                            base_transform.transform * parent_transform.transform.inverse();
+                        joint.local_transforms.push(base_transform);
+                    }
+                }
+            } else {
+                for transform in &joint.transforms {
+                    // clone instead of move
+                    joint.local_transforms.push(transform.clone());
+                }
+            }
+        }
+        Some(Skeleton {
+            root: root_joints,
+            joints,
+        })
+    } else {
+        None
+    }
+}
+
 fn add_item_to_agent_list(
     agent_list: Arc<Mutex<HashMap<Uuid, Avatar>>>,
     agent_id: Uuid,
@@ -135,22 +211,24 @@ fn add_item_to_agent_list(
         agent.outfit_items.push(item);
         // if all of the items have loaded in, trigger a render
         if agent.outfit_items.len() == agent.outfit_size {
-            address.do_send(agent.clone());
+            address.do_send(Agent {
+                avatar: agent.clone(),
+            });
         }
     }
 }
 
-impl Handler<Avatar> for Mailbox {
+impl Handler<Agent> for Mailbox {
     type Result = ();
-    fn handle(&mut self, msg: Avatar, ctx: &mut Self::Context) -> Self::Result {
-        for item in msg.outfit_items {
+    fn handle(&mut self, msg: Agent, ctx: &mut Self::Context) -> Self::Result {
+        for item in msg.avatar.outfit_items {
             match item {
-                OutfitObject::SceneGroup(scene_group) => {
-                    println!("{:?}", scene_group.parts[0].name);
+                OutfitObject::RiggedObject(object) => {
                     if let Ok(agent_dir) = create_sub_share_dir("agent") {
                         if let Ok(skeleton_path) = initialize_skeleton() {
                             match generate_avatar_from_scenegroup(
-                                scene_group,
+                                object.scene_group,
+                                object.skeleton,
                                 skeleton_path,
                                 agent_dir,
                             ) {
@@ -158,16 +236,16 @@ impl Handler<Avatar> for Mailbox {
                                     ctx.address().do_send(UiMessage::new(
                                         UiEventTypes::MeshUpdate,
                                         MeshUpdate {
-                                            position: msg.position,
+                                            position: msg.avatar.position,
                                             path,
                                             mesh_type: MeshType::Avatar,
-                                            id: Some(msg.agent_id),
+                                            id: Some(msg.avatar.agent_id),
                                         }
                                         .to_bytes(),
                                     ));
                                 }
                                 Err(e) => {
-                                    error!("uh oh stinky {:?}", e)
+                                    error!("uh oh {:?}", e)
                                 }
                             }
                         }

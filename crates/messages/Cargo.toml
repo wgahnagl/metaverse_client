@@ -30,6 +30,8 @@ serde-llsd = "0.3.6"
 quick-xml = "0.37.5"
 flate2 = "1.1.1"
 bytemuck = "1.23.0"
+strum = "0.27.1"
+strum_macros = "0.27.1"
 [dependencies.uuid]
 version = "1.16.0"
 features = [
@@ -38,3 +40,4 @@ features = [
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
     "serde",
 ]
+

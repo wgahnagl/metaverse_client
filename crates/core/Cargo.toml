@@ -6,7 +6,6 @@ description = "core program for server and client IO"
 license = "AGPL-3.0-or-later"
 edition = "2024"
 
-
 [dependencies]
 metaverse_messages = {path = "../messages/"}
 metaverse_environment = {path = "../environment/", optional = true}

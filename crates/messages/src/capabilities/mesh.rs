@@ -1,9 +1,11 @@
+use crate::utils::skeleton::JointName;
 use flate2::bufread::ZlibDecoder;
 use glam::{Mat4, Vec3};
 use serde_llsd::LLSDValue;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     io::{Error, ErrorKind, Read},
+    str::FromStr,
 };
 
 /// This is the Zlib magic number. In the binary, this is where the start of the zipped data
@@ -457,7 +459,7 @@ pub struct TextureCoordinateDomain {
 pub struct Skin {
     /// The names of the joints that are going to be altered. A full avatar replacement will
     /// replace all of the joints, and a partial skeleton will only replace some.
-    pub joint_names: HashSet<String>,
+    pub joint_names: Vec<JointName>,
     /// The inverse bind matrices used to determine the joint's transform, scale and rotation. This
     /// matrix aligns with the joint names. inverse_bind_matrices[0] corresponds to joint_names[0],
     /// describing the scale, rotation and transform of each joint, and where the joint should be
@@ -475,19 +477,29 @@ impl Skin {
             .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "Expected map"))?;
 
         // Parse joint_names
-        let joint_names: HashSet<String> = map
+        let joint_names: Vec<JointName> = map
             .get("joint_names")
             .and_then(LLSDValue::as_array)
-            .ok_or_else(|| {
-                std::io::Error::new(std::io::ErrorKind::InvalidData, "Missing joint_names")
-            })?
+            .ok_or_else(|| std::io::Error::new(ErrorKind::InvalidData, "Missing joint_names"))?
             .iter()
             .map(|v| {
-                v.as_string().map(|s| s.to_string()).ok_or_else(|| {
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid joint name")
-                })
+                v.as_string()
+                    .ok_or_else(|| {
+                        std::io::Error::new(
+                            ErrorKind::InvalidData,
+                            "Invalid joint name (not a string)",
+                        )
+                    })
+                    .and_then(|s| {
+                        JointName::from_str(&s).map_err(|e| {
+                            std::io::Error::new(
+                                ErrorKind::InvalidData,
+                                format!("Unknown joint name: {}, {}", s, e),
+                            )
+                        })
+                    })
             })
-            .collect::<Result<HashSet<_>, _>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
 
         // Parse inverse_bind_matrix
         let inverse_bind_matrices = map
