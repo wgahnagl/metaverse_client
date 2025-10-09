@@ -13,7 +13,7 @@ use std::io::Read;
 
 use xmlrpc_benthic::{self as xmlrpc};
 
-use super::login_errors::{LoginError, Reason, create_login_error_from_message};
+use super::login_errors::{create_login_error_from_message, LoginError, Reason};
 
 #[derive(Debug, Clone)]
 /// The struct required for constructing a login
@@ -116,7 +116,6 @@ pub async fn send_login_xmlrpc(
         Err(_) => Err(create_login_error_from_message(parsed_data_clone)),
     }
 }
-
 ///Generates a SimulatorLoginProtocol based on user supplied values
 ///returns a SimulatorLoginProtocol
 ///```

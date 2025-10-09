@@ -5,12 +5,13 @@
 /// I wrote this a long time ago, but it still works, and the less time you spend thinking about
 /// xml-rpc as used in this project, the better.
 use crate::{
-    login::login_errors::ConversionError,
-    utils::agent_access::{AgentAccess, parse_agent_access},
+    login::{errors::LoginResponseError, login_errors::ConversionError},
+    packet::packet::PacketData,
+    utils::agent_access::{parse_agent_access, AgentAccess},
 };
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::{collections::BTreeMap, str::FromStr};
+use std::{collections::BTreeMap, io::ErrorKind, str::FromStr};
+use std::{io::Error, str::from_utf8};
 use uuid::Uuid;
 use xmlrpc_benthic::{self as xmlrpc, Value};
 
@@ -110,6 +111,20 @@ pub struct LoginResponse {
     /// Undocumented
     pub seconds_since_epoch: Option<i64>,
 }
+
+impl PacketData for LoginResponse {
+    fn to_bytes(&self) -> Vec<u8> {
+        serde_json::to_string(self).unwrap().into_bytes()
+    }
+    fn from_bytes(bytes: &[u8]) -> std::io::Result<Self>
+    where
+        Self: Sized,
+    {
+        let s = from_utf8(bytes).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+        serde_json::from_str(s).map_err(|e| Error::new(ErrorKind::InvalidData, e))
+    }
+}
+
 impl From<LoginResponse> for Value {
     fn from(val: LoginResponse) -> Self {
         let mut map = BTreeMap::new();
@@ -1147,7 +1162,7 @@ impl From<xmlrpc::Value> for HomeValues {
 
 /// converts from xlmrpc to a LoginResponse
 impl TryFrom<xmlrpc::Value> for LoginResponse {
-    type Error = Box<dyn Error>;
+    type Error = LoginResponseError;
     fn try_from(val: xmlrpc::Value) -> Result<Self, Self::Error> {
         Ok(LoginResponse {
             home: Some(val["home"].clone().into()),

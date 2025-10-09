@@ -1,6 +1,12 @@
+use std::{
+    io::{Error, ErrorKind},
+    str::from_utf8,
+};
+
 use crate::{
     errors::errors::{AckError, CapabilityError, CircuitCodeError, CompleteAgentMovementError},
     login::login_errors::LoginError,
+    packet::packet::PacketData,
 };
 use bincode::{
     config,
@@ -52,6 +58,17 @@ pub enum SessionError {
     #[error("IOError: {0}")]
     IOError(String),
 }
+
+impl PacketData for SessionError {
+    fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {
+        let s = from_utf8(bytes).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+        serde_json::from_str(s).map_err(|e| Error::new(ErrorKind::InvalidData, e))
+    }
+    fn to_bytes(&self) -> Vec<u8> {
+        serde_json::to_string(&self).unwrap().into_bytes()
+    }
+}
+
 impl From<std::io::Error> for SessionError {
     fn from(e: std::io::Error) -> Self {
         SessionError::IOError(e.to_string())

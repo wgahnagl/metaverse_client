@@ -1,12 +1,16 @@
 use crate::{
     packet::{
         header::{Header, PacketFrequency},
-        packet::Packet,
+        packet::{Packet, PacketData},
         packet_types::PacketType,
     },
     utils::agent_access::AgentAccess,
 };
-use std::io::{self, Cursor, Read};
+use serde::{Deserialize, Serialize};
+use std::{
+    io::{self, Cursor, Error, ErrorKind, Read},
+    str::from_utf8,
+};
 use uuid::Uuid;
 
 impl Packet {
@@ -29,7 +33,17 @@ impl Packet {
     }
 }
 
-#[derive(Debug, Clone)]
+impl PacketData for RegionHandshake {
+    fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {
+        let s = from_utf8(bytes).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+        serde_json::from_str(s).map_err(|e| Error::new(ErrorKind::InvalidData, e))
+    }
+    fn to_bytes(&self) -> Vec<u8> {
+        serde_json::to_string(&self).unwrap().into_bytes()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 /// The simulator sends this in response to CompleteAgentMovement from the viewer.
 /// The viewer responds with RegionHandshakereply, which starts object updats via
 /// CoarseLocationUpdate

@@ -2,8 +2,12 @@ use bincode::config;
 use bincode::serde::{decode_from_slice, encode_to_vec};
 use glam::Vec3;
 use serde::{Deserialize, Serialize};
+use std::io::{Error, ErrorKind};
 use std::path::PathBuf;
+use std::str::from_utf8;
 use uuid::Uuid;
+
+use crate::packet::packet::PacketData;
 
 /// this is the struct for sending mesh updates from the core to the UI.
 /// the path is the path to the generated gltf file, and the position is where to place it in the
@@ -40,5 +44,15 @@ impl MeshUpdate {
         decode_from_slice(bytes, config::legacy())
             .ok()
             .map(|(mesh_update, _)| mesh_update)
+    }
+}
+
+impl PacketData for MeshUpdate {
+    fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {
+        let s = from_utf8(bytes).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+        serde_json::from_str(s).map_err(|e| Error::new(ErrorKind::InvalidData, e))
+    }
+    fn to_bytes(&self) -> Vec<u8> {
+        serde_json::to_string(&self).unwrap().into_bytes()
     }
 }

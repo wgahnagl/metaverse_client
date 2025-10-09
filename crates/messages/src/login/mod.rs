@@ -70,3 +70,5 @@ pub mod login_xmlrpc;
 /// Stores the simulator login protocol that is used for creating a login call to the server.
 ///implemented from the protocol as defined by <http://opensimulator.org/wiki/SimulatorLoginProtocol>
 pub mod simulator_login_protocol;
+
+pub mod errors;
