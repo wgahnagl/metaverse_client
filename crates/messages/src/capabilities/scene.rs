@@ -7,6 +7,7 @@ use crate::{
 };
 use glam::{bool, Vec3, Vec4};
 use quick_xml::{
+    escape::unescape,
     events::{BytesText, Event},
     Reader,
 };
@@ -243,7 +244,8 @@ impl SceneObject {
         scene_object: &mut SceneObject,
         offset: usize,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let val = e.unescape()?.into_owned();
+        let text = str::from_utf8(e.as_ref())?;
+        let val = unescape(text)?.into_owned();
         match &path_str[offset..] {
             ["CreatorID", "UUID"] => {
                 scene_object.creator_id = Uuid::parse_str(&val)?;

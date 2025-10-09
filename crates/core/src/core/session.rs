@@ -1,6 +1,9 @@
 use actix::prelude::*;
 use actix_rt::time;
 use bincode;
+use bincode::config;
+use bincode::serde::decode_from_slice;
+use bincode::serde::encode_to_vec;
 use log::{error, info};
 
 use metaverse_agent::avatar::Avatar;
@@ -17,7 +20,7 @@ use std::net::UdpSocket as SyncUdpSocket;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tokio::net::UdpSocket;
-use tokio::sync::{Notify, oneshot};
+use tokio::sync::{oneshot, Notify};
 use tokio::time::Duration;
 use uuid::Uuid;
 
@@ -104,12 +107,14 @@ pub struct UiMessage {
 impl UiMessage {
     /// Convert the struct into bytes using JSON serialization
     pub fn as_bytes(&self) -> Vec<u8> {
-        bincode::serialize(self).expect("Failed to serialize UiMessage")
+        encode_to_vec(self, config::legacy()).expect("Failed to serialize UiMessage")
     }
 
     /// Convert bytes back into a `UiMessage` struct
     pub fn from_bytes(bytes: &[u8]) -> Option<Self> {
-        bincode::deserialize(bytes).ok()
+        decode_from_slice(bytes, config::legacy())
+            .ok()
+            .map(|(message, _)| message)
     }
     /// create a new UiMessage
     pub fn new(message_type: UiEventTypes, message: Vec<u8>) -> UiMessage {

@@ -2,6 +2,10 @@ use crate::{
     errors::errors::{AckError, CapabilityError, CircuitCodeError, CompleteAgentMovementError},
     login::login_errors::LoginError,
 };
+use bincode::{
+    config,
+    serde::{decode_from_slice, encode_to_vec},
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -61,10 +65,12 @@ impl SessionError {
 
     /// to_bytes function for sending error from server to UI
     pub fn to_bytes(&self) -> Vec<u8> {
-        bincode::serialize(self).expect("Failed to serialize SessionError")
+        encode_to_vec(self, config::legacy()).expect("Failed to serialize SessionError")
     }
     /// from_bytes for sending error from server to UI
     pub fn from_bytes(bytes: &[u8]) -> Option<Self> {
-        bincode::deserialize(bytes).ok()
+        decode_from_slice(bytes, config::legacy())
+            .ok()
+            .map(|(error, _)| error)
     }
 }

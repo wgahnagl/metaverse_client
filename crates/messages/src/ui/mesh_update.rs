@@ -1,3 +1,5 @@
+use bincode::config;
+use bincode::serde::{decode_from_slice, encode_to_vec};
 use glam::Vec3;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -31,10 +33,12 @@ pub enum MeshType {
 impl MeshUpdate {
     /// convert the layer update to bytes to send to the UI
     pub fn to_bytes(&self) -> Vec<u8> {
-        bincode::serialize(self).expect("Failed to serialize LayerUpdate")
+        encode_to_vec(self, config::legacy()).expect("Failed to serialize LayerUpdate")
     }
     /// convert the bytes back to a layer update struct
     pub fn from_bytes(bytes: &[u8]) -> Option<Self> {
-        bincode::deserialize(bytes).ok()
+        decode_from_slice(bytes, config::legacy())
+            .ok()
+            .map(|(mesh_update, _)| mesh_update)
     }
 }

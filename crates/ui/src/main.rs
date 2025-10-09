@@ -30,7 +30,6 @@ fn main() {
         .add_plugins(PanOrbitCameraPlugin)
         .add_plugins(EguiPlugin::default())
         .add_plugins(MetaversePlugin)
-        //// ✅ ensure UI systems run after egui's frame is ready
         .add_systems(
             EguiPrimaryContextPass,
             login_screen.run_if(in_state(ViewerState::Login)),
