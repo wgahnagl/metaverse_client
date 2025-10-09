@@ -18,7 +18,7 @@ pub struct MeshUpdate {
     pub id: Option<Uuid>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
 /// Type of mesh the UI is rendering.
 pub enum MeshType {
     /// Land type
