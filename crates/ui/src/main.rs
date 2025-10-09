@@ -1,8 +1,8 @@
 use bevy::app::TerminalCtrlCHandlerPlugin;
 use bevy::asset::UnapprovedPathMode;
 use bevy::prelude::*;
+use bevy_egui::EguiPlugin;
 use bevy_egui::EguiPrimaryContextPass;
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
 use ui::chat::chat_screen;
 use ui::loading::loading_screen;

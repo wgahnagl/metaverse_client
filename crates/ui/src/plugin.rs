@@ -1,4 +1,4 @@
-use bevy::mesh::skinning::{SkinnedMesh, SkinnedMeshInverseBindposes};
+use bevy::mesh::skinning::SkinnedMesh;
 use metaverse_core::initialize::initialize;
 use std::fs::create_dir_all;
 use std::net::UdpSocket;
