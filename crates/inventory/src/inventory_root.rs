@@ -16,7 +16,7 @@ pub async fn refresh_inventory_2(
     server_endpoint: String,
 ) -> Result<(), InventoryError> {
     use std::collections::HashSet;
-    use std::pin::Pin;
+    
 
     // Define the recursive helper
     async fn refresh_recursive(
