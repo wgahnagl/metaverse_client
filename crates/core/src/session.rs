@@ -283,6 +283,11 @@ impl Handler<UIResponse> for Mailbox {
                             agent_id: session.agent_id,
                         }));
                 }
+                UIResponse::AgentUpdate(mut data) => {
+                    data.agent_id = session.agent_id;
+                    data.session_id = session.session_id;
+                    ctx.address().do_send(Packet::new_agent_update(data));
+                }
                 data => {
                     error!("Unrecognized UIMessage: {:?}", data)
                 }

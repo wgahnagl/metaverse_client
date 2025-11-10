@@ -46,6 +46,7 @@ pub struct DownloadPrim {
 impl Handler<ObjectUpdate> for Mailbox {
     type Result = ();
     fn handle(&mut self, msg: ObjectUpdate, ctx: &mut Self::Context) -> Self::Result {
+        println!("id: {:?}, pcode:{:?}", msg.full_id, msg.pcode);
         if let Some(session) = self.session.as_mut() {
             if !session.inventory_data.inventory_init {
                 warn!("Inventory not yet populated. Queueing object update...");
