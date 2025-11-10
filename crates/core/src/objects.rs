@@ -1,10 +1,12 @@
 use super::agent::DownloadAgentAsset;
 use super::session::Mailbox;
-use actix::{AsyncContext, Handler, Message};
+use actix::{AsyncContext, Handler, Message, WrapFuture};
 use glam::Vec3;
 use log::warn;
 use metaverse_agent::avatar::Avatar;
 
+use crate::initialize::create_sub_agent_dir;
+use crate::inventory::RefreshInventoryEvent;
 use metaverse_inventory::agent::get_current_outfit;
 use metaverse_messages::http::item::Item;
 use metaverse_messages::udp::core::object_update::AttachItem;
@@ -15,8 +17,6 @@ use metaverse_messages::{
 };
 use std::time::Duration;
 use uuid::Uuid;
-
-use crate::initialize::create_sub_agent_dir;
 
 #[derive(Debug, Message)]
 #[rtype(result = "()")]
@@ -42,11 +42,16 @@ pub struct DownloadPrim {
     pub position: Vec3,
 }
 
+#[derive(Debug, Message)]
+#[rtype(result = "()")]
+pub struct ForeignAgentUpdate {
+    pub id: Uuid,
+}
+
 #[cfg(any(feature = "agent", feature = "environment"))]
 impl Handler<ObjectUpdate> for Mailbox {
     type Result = ();
     fn handle(&mut self, msg: ObjectUpdate, ctx: &mut Self::Context) -> Self::Result {
-        println!("id: {:?}, pcode:{:?}", msg.full_id, msg.pcode);
         if let Some(session) = self.session.as_mut() {
             if !session.inventory_data.inventory_init {
                 warn!("Inventory not yet populated. Queueing object update...");
@@ -57,14 +62,12 @@ impl Handler<ObjectUpdate> for Mailbox {
             match msg.pcode {
                 ObjectType::Prim => {
                     // this object type can be used to parent objects to bones on models.
-                    // TODO: handle this later.
-                    let _ = match AttachItem::parse_attach_item(msg.name_value) {
-                        Ok(item) => item,
-                        Err(_) => {
-                            // error!("{:?}", e);
-                            return;
-                        }
-                    };
+                    // If the AttachItem fails to parse, then it's not an object attachment
+                    if let Ok(item) = AttachItem::parse_attach_item(msg.name_value) {
+                        // do item attachment stuff here :(
+                        //println!("attachment item: {:?}", item);
+                        return;
+                    }
                 }
                 ObjectType::Tree
                 | ObjectType::Grass
@@ -82,11 +85,17 @@ impl Handler<ObjectUpdate> for Mailbox {
                     // if the ID of the object is your agent ID, you are downloading your own
                     // current outfit.
                     if session.agent_id == msg.full_id {
+                        // this retrieves the current outfit from the sqlite DB.
+                        // This returns just the relevant info, which is a tuple of
+                        // (name, item ID, asset ID, type)
                         let elements =
                             get_current_outfit(&self.inventory_db_connection.lock().unwrap())
                                 .unwrap_or_else(|e| panic!("Failed to get current outfit: {}", e));
-
-                        // just count the objects for now.
+                        // create the agent directory that will contain the agent's
+                        // files, such as skeleton json, clothing jsons, and rendered 3d files.
+                        if let Err(e) = create_sub_agent_dir(&msg.full_id.to_string()) {
+                            warn!("Failed to create agent dir for {:?}: {:?}", msg.full_id, e);
+                        }
                         // TODO: fix this. Figure out the proper size.
                         // keep only elements with type Object
                         let object_elements: Vec<_> = elements
@@ -106,11 +115,6 @@ impl Handler<ObjectUpdate> for Mailbox {
                                 ),
                             );
                         }
-                        // create the agent directory that will contain the agent's
-                        // files, such as skeleton json, clothing jsons, and rendered 3d files.
-                        if let Err(e) = create_sub_agent_dir(&msg.full_id.to_string()) {
-                            warn!("Failed to create agent dir for {:?}: {:?}", msg.full_id, e);
-                        }
 
                         // download all of the assets in the inventory
                         for element in object_elements {
@@ -129,13 +133,30 @@ impl Handler<ObjectUpdate> for Mailbox {
                             });
                         }
                     } else {
-                        println!("HANDLE NON-USER UPDATE")
-                    }
+                        ctx.address()
+                            .do_send(ForeignAgentUpdate { id: msg.full_id });
+                    };
                 }
                 _ => {
                     println!("Unknown object type");
                 }
             }
         }
+    }
+}
+
+impl Handler<ForeignAgentUpdate> for Mailbox {
+    type Result = ();
+    fn handle(&mut self, msg: ForeignAgentUpdate, ctx: &mut Self::Context) -> Self::Result {
+        let id = msg.id.clone();
+        let addr = ctx.address().clone();
+
+        ctx.spawn(
+            async move {
+                println!("SENDING REFRESH INVENTORY EVENT FOR FOREIGN AGENT UPDATE____________________________________________________________________________________________________________________");
+                let _ = addr.send(RefreshInventoryEvent { agent_id: id }).await;
+            }
+            .into_actor(self),
+        );
     }
 }
