@@ -42,13 +42,13 @@ pub async fn refresh_inventory(
         let parsed_data = from_str(&data)?;
         let folders = Folder::from_llsd(parsed_data)?;
 
-        for folder in folders {
+        for mut folder in folders {
             if !visited.insert(folder.folder_id) {
                 // Already processed, skip to prevent infinite recursion
                 continue;
             }
 
-            insert_folder(conn, &folder)?;
+            insert_folder(conn, &mut folder)?;
             insert_items(conn, &folder.folder_id, &folder.items)?;
             insert_categories(conn, &folder.folder_id, &folder.categories)?;
 
@@ -80,7 +80,7 @@ pub async fn refresh_inventory(
 }
 
 
-fn insert_folder(conn: &mut Connection, folder: &Folder) -> Result<(), InventoryError> {
+fn insert_folder(conn: &mut Connection, folder: &mut Folder) -> Result<(), InventoryError> {
     conn.execute(
         "INSERT OR REPLACE INTO folders (id, owner_id, agent_id, descendent_count, version)
          VALUES (?1, ?2, ?3, ?4, ?5)",

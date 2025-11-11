@@ -7,7 +7,7 @@ use metaverse_agent::avatar::Avatar;
 
 use crate::initialize::create_sub_agent_dir;
 use crate::inventory::RefreshInventoryEvent;
-use metaverse_inventory::agent::get_current_outfit;
+use metaverse_inventory::agent::{get_agent_outfit, get_current_outfit};
 use metaverse_messages::http::item::Item;
 use metaverse_messages::udp::core::object_update::AttachItem;
 use metaverse_messages::utils::item_metadata::ItemMetadata;
@@ -65,7 +65,7 @@ impl Handler<ObjectUpdate> for Mailbox {
                     // If the AttachItem fails to parse, then it's not an object attachment
                     if let Ok(item) = AttachItem::parse_attach_item(msg.name_value) {
                         // do item attachment stuff here :(
-                        //println!("attachment item: {:?}", item);
+                        println!("ATTACHMENT ITEM_____________: {:?}", item);
                         return;
                     }
                 }
@@ -133,8 +133,9 @@ impl Handler<ObjectUpdate> for Mailbox {
                             });
                         }
                     } else {
-                        ctx.address()
-                            .do_send(ForeignAgentUpdate { id: msg.full_id });
+                        println!("{:?}", msg);
+                        //ctx.address()
+                        //    .do_send(ForeignAgentUpdate { id: msg.full_id });
                     };
                 }
                 _ => {
@@ -150,11 +151,14 @@ impl Handler<ForeignAgentUpdate> for Mailbox {
     fn handle(&mut self, msg: ForeignAgentUpdate, ctx: &mut Self::Context) -> Self::Result {
         let id = msg.id.clone();
         let addr = ctx.address().clone();
+        let db_conn = self.inventory_db_connection.clone();
 
         ctx.spawn(
             async move {
                 println!("SENDING REFRESH INVENTORY EVENT FOR FOREIGN AGENT UPDATE____________________________________________________________________________________________________________________");
                 let _ = addr.send(RefreshInventoryEvent { agent_id: id }).await;
+                let elements = get_agent_outfit(&db_conn.lock().unwrap(), id);
+                println!("{:?}", elements);
             }
             .into_actor(self),
         );

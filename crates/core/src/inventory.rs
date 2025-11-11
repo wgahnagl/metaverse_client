@@ -20,13 +20,8 @@ pub struct InventoryData {
     /// UUIDs that will be used to create the root of the inventory tree using a
     /// FetchInventoryDescendents2 call.
     pub inventory_root: Uuid,
-    /// The root of the inventory lib, received from the LoginResponse. This is a vector of base
-    /// UUIDs that will be used to create the root of the inventory lib tree using a
-    /// FetchLibDescendents2 call. The library contains the public inventory for the simulator and
-    /// is used to retrieve other people's items and appearances.
-    pub inventory_lib_root: Option<Uuid>,
     /// The UUID of the owner of the inventory lib. Used to create the FetchLibDescendents2 call.
-    pub inventory_lib_owner: Option<Uuid>,
+    pub inventory_lib_owner: Uuid,
     pub inventory_init: bool,
 }
 
@@ -66,13 +61,12 @@ impl Handler<RefreshInventoryEvent> for Mailbox {
                         session.agent_id,
                     )
                 } else {
-                    println!("REFRESHING INVENTORY FOR FOREIGN AGENT ___________________________________________________");
                     (
                         session
                             .capability_urls
                             .get(&Capability::FetchLibDescendents2),
-                        msg.agent_id,
-                        msg.agent_id,
+                        Uuid::nil(),
+                        session.inventory_data.inventory_lib_owner,
                     )
                 };
                 if let Some(url) = capability_url {

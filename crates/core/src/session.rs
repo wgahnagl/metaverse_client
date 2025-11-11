@@ -394,8 +394,11 @@ async fn handle_login(
                         "Login response contained no inventory_root".to_string(),
                     )
                 })?,
-                inventory_lib_root: login_response.inventory_lib_root,
-                inventory_lib_owner: login_response.inventory_lib_owner,
+                inventory_lib_owner: login_response.inventory_lib_owner.ok_or_else(|| {
+                    FeatureError::Inventory(
+                        "Login response contained no inventory_lib_owner".to_string(),
+                    )
+                })?,
                 inventory_init: false,
             },
             #[cfg(feature = "agent")]

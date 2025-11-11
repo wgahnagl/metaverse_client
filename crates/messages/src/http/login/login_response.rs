@@ -140,6 +140,7 @@ impl LoginResponse {
                         event_notifications: get_opt("event_notifications", map),
                         inventory_root: get_inventory_root(map),
                         inventory_lib_root: get_nested_value("inventory-lib-root", map),
+                        inventory_lib_owner: get_inventory_lib_owner(map),
                         inventory_skeleton: get_nested_vec("inventory-skeleton", map),
                         inventory_skeleton_lib: get_nested_vec("inventory-skel-lib", map),
                         classified_categories: get_nested_vec("classified_categories", map),
@@ -148,7 +149,6 @@ impl LoginResponse {
                         region_y: get_opt("region_y", map),
                         start_location: get_opt("start_location", map),
                         event_categories: get_opt("event_categories", map),
-                        inventory_lib_owner: get_opt("inventory_lib_owner", map),
                         buddy_list: get_vec("buddy_list", map),
                         region_size_x: get_opt("region_size_x", map),
                         region_size_y: get_opt("region_size_y", map),
@@ -183,6 +183,21 @@ fn get_inventory_root(map: &HashMap<String, LLSDValue>) -> Option<Uuid> {
         } else {
             None
         }
+    })
+}
+pub fn get_inventory_lib_owner(map: &HashMap<String, LLSDValue>) -> Option<Uuid> {
+    map.get("inventory-lib-owner").and_then(|v| {
+        if let LLSDValue::Array(arr) = v {
+            for item in arr {
+                if let LLSDValue::Map(inner_map) = item {
+                    // each inner_map represents the <struct> with agent_id
+                    if let Some(uuid) = get_opt::<Uuid>("agent_id", inner_map) {
+                        return Some(uuid); // return first agent_id found
+                    }
+                }
+            }
+        }
+        None
     })
 }
 pub fn get_nested_value<T: FromLLSDValue>(
