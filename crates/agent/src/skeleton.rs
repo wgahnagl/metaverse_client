@@ -47,11 +47,7 @@ pub fn create_skeleton(object_name: String, id: Uuid, skin: &Skin) -> Result<Ske
 
         default_transform.w_axis = Vec4::new(0.0, 0.0, 0.0, 1.0);
         let transform_matrix = default_transform * skin.inverse_bind_matrices[i];
-        if *name == JointName::Pelvis {
-            println!("PELVIS DEFAULT:\n{:?}", default_transform);
-            println!("PELVIS IBM:\n{:?}", skin.inverse_bind_matrices[i]);
-            println!("PELVIS RESULT:\n{:?}", transform_matrix);
-        }
+
         let transform = Transform {
             name: object_name.clone(),
             id,

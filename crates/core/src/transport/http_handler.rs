@@ -12,6 +12,7 @@ use metaverse_messages::http::login::simulator_login_protocol::SimulatorLoginPro
 use metaverse_messages::http::mesh::Mesh;
 use metaverse_messages::http::{item::Item, scene::SceneGroup};
 use metaverse_messages::utils::object_types::ObjectType;
+use std::fs;
 use std::io::Error;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
@@ -149,8 +150,26 @@ pub async fn download_mesh(
     asset_id: Uuid,
     server_endpoint: &str,
 ) -> std::io::Result<Mesh> {
-    Mesh::from_bytes(&download_asset(item_type, asset_id, server_endpoint).await?)
-        .map_err(|e| Error::other(format!("Failed to parse SceneGroup XML: {}", e)))
+    let mesh = Mesh::from_bytes(&download_asset(item_type, asset_id, server_endpoint).await?)
+        .map_err(|e| Error::other(format!("Failed to parse Mesh: {}", e)))?;
+
+    let mesh_dir = dirs::data_local_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("benthic")
+        .join("meshes");
+
+    fs::create_dir_all(&mesh_dir)?;
+
+    let mesh_path = mesh_dir.join(format!("{}.json", asset_id));
+
+    let json = serde_json::to_string_pretty(&mesh)
+        .map_err(|e| Error::other(format!("Failed to serialize Mesh: {}", e)))?;
+
+    fs::write(&mesh_path, json)?;
+
+    println!("Wrote Mesh JSON to: {}", mesh_path.display());
+
+    Ok(mesh)
 }
 
 /// Retrieve a texture from the ViewerAsset endpoint.
