@@ -6,8 +6,6 @@ use serde_llsd_benthic::{LLSDValue, ser::xml_rpc};
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
-use std::fs::File;
-use std::io::Read;
 
 ///SimulatorLoginProtocol- the struct for creating a login call
 ///implemented from the protocol as defined by <http://opensimulator.org/wiki/SimulatorLoginProtocol>
