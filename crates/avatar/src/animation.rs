@@ -1,16 +1,10 @@
-use std::{
-    collections::BTreeSet,
-    hash::{DefaultHasher, Hash, Hasher},
-    path::PathBuf,
-};
-
 use crate::errors::AnimationError;
+use benthic_default_asset_converter::generated_animation_path;
 use benthic_protocol::{
     default_animations::DefaultAnimation,
     session::{cache_enabled, create_filtered_animation_dir},
     skeleton::{JointName, Skeleton},
 };
-use default_asset_converter::generated_animation_path;
 use metaverse_mesh::animation::{
     generate::{
         generate_gltf_animation, retarget_filtered_gltf_animation, retarget_gltf_animation,
@@ -18,6 +12,11 @@ use metaverse_mesh::animation::{
     retarget::check_skeleton_cycles,
 };
 use metaverse_messages::udp::agent::avatar_animation::AnimationEntry;
+use std::{
+    collections::BTreeSet,
+    hash::{DefaultHasher, Hash, Hasher},
+    path::PathBuf,
+};
 
 pub async fn build_animation(
     animations: Vec<AnimationEntry>,

@@ -12,6 +12,10 @@ use strum_macros::EnumString;
 #[allow(unused)]
 use uuid::Uuid;
 
+pub fn default_assets() -> PathBuf {
+    PathBuf::from(env!("BENTHIC_DEFAULT_ASSETS"))
+}
+
 pub mod generated {
     use benthic_protocol::skeleton::Skeleton;
     use once_cell::sync::Lazy;

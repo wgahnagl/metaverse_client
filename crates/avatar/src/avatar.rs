@@ -1,12 +1,11 @@
 use actix::Message;
+use benthic_default_asset_converter::generated::DEFAULT_SKELETON;
 use benthic_protocol::skeleton::{JointName, Skeleton};
+use glam::Vec3;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::time::SystemTime;
-
-use default_asset_converter::generated::DEFAULT_SKELETON;
-use glam::Vec3;
 use uuid::Uuid;
 
 // Definitions for an avatar object

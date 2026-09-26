@@ -1,18 +1,20 @@
 [package]
 name = "metaverse_avatar"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Skyler Clark<skylerjaneclark@gmail.com>"]
 description = "Avatar handling for the open metaverse"
 license = "AGPL-3.0-or-later"
+homepage= "https://benthic-mmo.github.io/"
+repository = "https://github.com/benthic-mmo/metaverse_client/tree/main/crates/avatar"
 edition = "2024"
 
-
+exclude = ["tests/**/*"]
 
 [dependencies]
-metaverse_messages = {path="../messages/"}
-default_asset_converter = {path = "../default_asset_converter"}
-benthic_protocol = {path = "../benthic_protocol/"}
-metaverse_mesh = {path = "../../../metaverse_mesh/"}
+metaverse_messages = "0.2.1"
+benthic_default_asset_converter = "0.2.1"
+benthic_protocol = "0.2.1"
+metaverse_mesh = "0.2.1"
 byteorder = "1.5.0"
 rgb = "0.8.53"
 uuid = "1.26.1"

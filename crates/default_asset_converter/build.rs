@@ -10,24 +10,64 @@ use gltf::Node;
 use indexmap::IndexMap;
 use std::fs::File;
 use std::io::BufReader;
+use std::path::Path;
+use std::process::Command;
 use std::{collections::HashMap, env, fs, path::PathBuf, str::FromStr};
 use uuid::Uuid;
+
+const DEFAULT_ASSETS_REPO: &str = "https://github.com/benthic-mmo/benthic_default_assets.git";
+const DEFAULT_ASSETS_TAG: &str = "v0.2.1";
+
+fn download_default_assets(out_dir: &Path) -> PathBuf {
+    let assets_dir = out_dir.join("benthic_default_assets");
+
+    if assets_dir.exists() {
+        return assets_dir;
+    }
+
+    println!("cargo:warning=Downloading benthic_default_assets {DEFAULT_ASSETS_TAG}");
+
+    let status = Command::new("git")
+        .args([
+            "clone",
+            "--depth",
+            "1",
+            "--branch",
+            DEFAULT_ASSETS_TAG,
+            DEFAULT_ASSETS_REPO,
+        ])
+        .arg(&assets_dir)
+        .status()
+        .expect("Failed to execute git. Is git installed?");
+
+    if !status.success() {
+        panic!("Failed to download benthic_default_assets {DEFAULT_ASSETS_TAG}");
+    }
+
+    assets_dir
+}
 
 fn main() {
     let gen_animations = std::env::var("CARGO_FEATURE_ANIMATIONS").is_ok();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let default_assets = download_default_assets(&out_dir);
+
+    println!(
+        "cargo:rustc-env=BENTHIC_DEFAULT_ASSETS={}",
+        default_assets.display()
+    );
 
     // copy the default texture to the build dir
-    let texture_path = benthic_default_assets::textures();
+
+    let texture_path = default_assets.join("Textures");
     fs::copy(
         texture_path.join("default.png"),
         out_dir.join("default.png"),
     )
     .unwrap();
 
-    let animation_path = benthic_default_assets::animations();
-    let target_skeleton_path = benthic_default_assets::skeleton().join("skeleton.gltf");
-
+    let animation_path = default_assets.join("Animations");
+    let target_skeleton_path = default_assets.join("Skeleton").join("skeleton.gltf");
     println!("cargo:rerun-if-changed={}", target_skeleton_path.display());
 
     if let Ok(entries) = fs::read_dir(&animation_path) {

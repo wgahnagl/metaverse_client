@@ -1,15 +1,15 @@
 [package]
 name = "metaverse_messages"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Skyler Clark<skylerjaneclark@gmail.com>"]
 description = "packet definitions for the open metaverse"
 license = "AGPL-3.0-or-later"
 edition = "2024"
 
 [dependencies]
-serde-llsd-benthic = {path = "../../../benthic-serde-llsd/"}
-benthic_default_assets = {path = "../../../benthic_default_assets/"}
-benthic_protocol = {path = "../benthic_protocol/"}
+serde-llsd-benthic = "0.2.1"
+
+benthic_protocol = "0.2.1"
 log = "0.4"
 byteorder = "1.5.0"
 mac_address = "1.1.8"
