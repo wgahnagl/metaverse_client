@@ -1,6 +1,6 @@
 [package]
 name = "benthic_default_asset_converter"
-version = "0.2.2"
+version = "0.3.2"
 authors = ["Skyler Clark<skylerjaneclark@gmail.com>"]
 description = "A simple patching build script to download and convert benthic default assets to json represntations for use in the wider project."
 license = "AGPL-3.0-or-later"
@@ -10,7 +10,8 @@ edition = "2024"
 links = "benthic_default_asset_converter"
 
 [build-dependencies]
-benthic_protocol = "0.2.1"
+benthic_protocol = "0.3.2"
+
 gltf = "1.4.1"
 uuid = "1.23.4"
 indexmap = "2.14.0"
@@ -26,8 +27,9 @@ quaternius_adjustments = []
 
 
 [dependencies]
+benthic_protocol = "0.3.2"
+
 anyhow = "1.0.104"
-benthic_protocol = "0.2.1" 
 glam = "0.32.1"
 gltf = "1.4.1"
 gltf-json = "1.4.1"

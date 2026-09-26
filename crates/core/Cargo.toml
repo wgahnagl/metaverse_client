@@ -1,6 +1,6 @@
 [package]
 name = "metaverse_core"
-version = "0.2.1"
+version = "0.3.2"
 authors = ["Skyler Clark<skylerjaneclark@gmail.com>"]
 description = "core program for server and client IO"
 homepage= "https://benthic-mmo.github.io/"
@@ -8,23 +8,17 @@ repository = "https://github.com/benthic-mmo/metaverse_client/tree/main/crates/c
 license = "AGPL-3.0-or-later"
 edition = "2024"
 
-# Include the assets dir, which contains default assets and textures.
-include = [
-    "src/**",
-    "Cargo.toml",
-    "assets/**",
-]
-
 [dependencies]
-metaverse_messages = "0.2.1"
-metaverse_environment = {version="0.2.1", optional = true}
-metaverse_avatar = {version="0.2.1", optional = true}
-metaverse_cache = {version="0.2.1", optional = true}
-metaverse_objects = {version="0.2.1"}
-metaverse_mesh = {version="0.2.1"}
-serde-llsd-benthic = {version="0.2.1"}
-benthic_protocol = {version="0.2.1"}
-benthic_default_asset_converter = {version="0.2.1", features = ["animations"]}
+metaverse_messages = "0.3.2"
+metaverse_environment = {version="0.3.2", optional = true}
+metaverse_avatar = {version="0.3.2", optional = true}
+metaverse_cache = {version="0.3.2", optional = true}
+metaverse_objects = {version="0.3.2"}
+metaverse_mesh = {version="0.3.2"}
+serde-llsd-benthic = {version="0.3.2"}
+benthic_protocol = {version="0.3.2"}
+benthic_default_asset_converter = {version="0.3.2", features = ["animations"]}
+
 tokio = { version = "1.53.1", features = ["full"] }
 log = "0.4"
 actix = "0.13.5"

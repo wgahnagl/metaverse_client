@@ -1,15 +1,17 @@
 [package]
 name = "metaverse_messages"
-version = "0.2.1"
+version = "0.3.2"
 authors = ["Skyler Clark<skylerjaneclark@gmail.com>"]
 description = "packet definitions for the open metaverse"
+homepage= "https://benthic-mmo.github.io/"
+repository = "https://github.com/benthic-mmo/metaverse_client/tree/main/crates/messages"
 license = "AGPL-3.0-or-later"
 edition = "2024"
 
 [dependencies]
-serde-llsd-benthic = "0.2.1"
+serde-llsd-benthic = "0.3.2"
+benthic_protocol = "0.3.2"
 
-benthic_protocol = "0.2.1"
 log = "0.4"
 byteorder = "1.5.0"
 mac_address = "1.1.8"
