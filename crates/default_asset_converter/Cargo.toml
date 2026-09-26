@@ -1,12 +1,16 @@
 [package]
-name = "default_asset_converter"
-version = "0.0.0"
+name = "benthic_default_asset_converter"
+version = "0.2.2"
+authors = ["Skyler Clark<skylerjaneclark@gmail.com>"]
+description = "A simple patching build script to download and convert benthic default assets to json represntations for use in the wider project."
+license = "AGPL-3.0-or-later"
+homepage= "https://benthic-mmo.github.io/"
+repository = "https://github.com/benthic-mmo/metaverse_client/tree/main/crates/default_asset_converter"
 edition = "2024"
+links = "benthic_default_asset_converter"
 
 [build-dependencies]
-#benthic_default_assets = { git = "https://github.com/benthic-mmo/benthic_default_assets.git", tag = "v0.0.0" }
-benthic_default_assets = { path = "../../../benthic_default_assets"}
-benthic_protocol = {path = "../benthic_protocol/"}
+benthic_protocol = "0.2.1"
 gltf = "1.4.1"
 uuid = "1.23.4"
 indexmap = "2.14.0"
@@ -23,7 +27,7 @@ quaternius_adjustments = []
 
 [dependencies]
 anyhow = "1.0.104"
-benthic_protocol = {path = "../benthic_protocol/"}
+benthic_protocol = "0.2.1" 
 glam = "0.32.1"
 gltf = "1.4.1"
 gltf-json = "1.4.1"

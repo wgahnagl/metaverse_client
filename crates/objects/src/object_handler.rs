@@ -1,10 +1,10 @@
+use benthic_default_asset_converter::default_texture_path;
 use benthic_protocol::{
     objects::GeneratorObject,
     render_data::{RenderObject, SkinData},
     session::{CacheDir, create_sub_object_dir, write_json},
     skeleton::Skeleton,
 };
-use default_asset_converter::default_texture_path;
 use glam::{Vec3, Vec4};
 use log::{info, warn};
 use metaverse_avatar::skeleton::create_skeleton;

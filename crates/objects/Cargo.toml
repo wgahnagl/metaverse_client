@@ -1,15 +1,20 @@
 [package]
 name = "metaverse_objects"
-version = "0.1.0"
+version = "0.2.1"
+authors = ["Skyler Clark<skylerjaneclark@gmail.com>"]
+description = "Metaverse objects, a crate for handling objects in Benthic"
+license = "AGPL-3.0-or-later"
+homepage= "https://benthic-mmo.github.io/"
+repository = "https://github.com/benthic-mmo/metaverse_client/tree/main/crates/objects"
 edition = "2024"
 
 [dependencies]
-benthic_protocol = {path="../benthic_protocol/"}
-metaverse_messages = {path="../messages/"}
-metaverse_avatar = {path="../avatar/"}
-metaverse_cache = {path="../cache/"}
-default_asset_converter= {path="../default_asset_converter/"}
-metaverse_mesh = {path="../../../metaverse_mesh/"}
+benthic_protocol = "0.2.1" 
+metaverse_messages = "0.2.1" 
+metaverse_avatar = "0.2.1" 
+metaverse_cache = "0.2.1" 
+benthic_default_asset_converter= "0.2.1" 
+metaverse_mesh = "0.2.1" 
 
 thiserror = "2.0.20"
 image = "0.25.10"
