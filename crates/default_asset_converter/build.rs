@@ -16,7 +16,7 @@ use std::{collections::HashMap, env, fs, path::PathBuf, str::FromStr};
 use uuid::Uuid;
 
 const DEFAULT_ASSETS_REPO: &str = "https://github.com/benthic-mmo/benthic_default_assets.git";
-const DEFAULT_ASSETS_TAG: &str = "v0.2.1";
+const DEFAULT_ASSETS_TAG: &str = "v0.3.1";
 
 fn download_default_assets(out_dir: &Path) -> PathBuf {
     let assets_dir = out_dir.join("benthic_default_assets");

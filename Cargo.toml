@@ -10,5 +10,4 @@ members = [
   "crates/cache", 
   "crates/objects",
   "crates/benthic_protocol",
-  "crates/default_asset_converter",
 ]
