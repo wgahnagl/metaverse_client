@@ -1,5 +1,5 @@
+use crate::avatar::AgentID;
 use crate::core_plugin::AnimationEvent;
-use crate::mesh::AgentID;
 use bevy::app::{App, Plugin, Update};
 use bevy::asset::AssetServer;
 use bevy::ecs::component::Component;
@@ -28,7 +28,8 @@ use uuid::Uuid;
 pub struct BenthicAnimationPlugin;
 impl Plugin for BenthicAnimationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, update_animations)
+        app.add_observer(scene_instance_ready)
+            .add_systems(Update, update_animations)
             .add_systems(Update, handle_animation_update)
             .insert_resource(AnimationQueue {
                 pending: HashMap::new(),
@@ -96,6 +97,7 @@ pub fn update_animations(
     let mut done = vec![];
 
     for (agent_id, animation_data) in animation_queue.pending.iter() {
+        println!("HELLO PENDING UPDATE ANIMATION event");
         for (player_entity, mut player, agent_animation) in players.iter_mut() {
             if agent_animation.agent_id == *agent_id {
                 let Some(gltf) = gltf_assets.get(&animation_data.gltf_handle) else {

@@ -40,7 +40,6 @@ pub fn add_object_to_avatar<C, L, U, I, X>(
         OutfitObject::MeshObject(path) => {
             let file = fs::File::open(path)?;
             let parts: Vec<RenderObject> = serde_json::from_reader(file)?;
-            println!("{:?}", parts.last().unwrap().faces);
 
             if let Some(skin) = parts.first().and_then(|part| part.skin.as_ref()) {
                 update_global_avatar_skeleton(avatar, &skin.skeleton);
