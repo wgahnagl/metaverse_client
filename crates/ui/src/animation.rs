@@ -4,8 +4,10 @@ use bevy::app::{App, Plugin, Update};
 use bevy::asset::AssetServer;
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
 use bevy::ecs::message::MessageReader;
 use bevy::ecs::observer::On;
+use bevy::ecs::query::With;
 use bevy::gltf::Gltf;
 use bevy::prelude::Res;
 use bevy::{
@@ -55,17 +57,47 @@ pub struct AgentAnimationPlayer {
 pub fn scene_instance_ready(
     trigger: On<WorldInstanceReady>,
     mut commands: Commands,
-    animation_players: Query<(Entity, &AnimationPlayer)>,
-    agent_id_query: Query<(Entity, &AgentID)>,
+    agent_ids: Query<&AgentID>,
+    parents: Query<&ChildOf>,
+    children: Query<&Children>,
+    animation_players: Query<(), With<AnimationPlayer>>,
 ) {
-    if let Some((_, agent_id)) = agent_id_query
-        .iter()
-        .find(|(entity, _)| *entity == trigger.entity)
-    {
-        for (player_entity, _) in animation_players.iter() {
-            commands.entity(player_entity).insert(AgentAnimationPlayer {
-                agent_id: agent_id.id,
-            });
+    // Find the avatar ID on this entity or one of its ancestors.
+    let mut current = trigger.entity;
+
+    let agent_id = loop {
+        if let Ok(agent_id) = agent_ids.get(current) {
+            break Some(agent_id.id);
+        }
+
+        let Ok(parent) = parents.get(current) else {
+            break None;
+        };
+
+        current = parent.parent();
+    };
+
+    let Some(agent_id) = agent_id else {
+        warn!(
+            "WorldInstanceReady: no AgentID found for {:?}",
+            trigger.entity
+        );
+        return;
+    };
+
+    // Walk only this instance's descendants.
+    let mut pending = vec![trigger.entity];
+
+    while let Some(entity) = pending.pop() {
+        if animation_players.get(entity).is_ok() {
+            commands
+                .entity(entity)
+                .insert(AgentAnimationPlayer { agent_id });
+            info!("Tagged animation player {:?} for {:?}", entity, agent_id);
+        }
+
+        if let Ok(child_entities) = children.get(entity) {
+            pending.extend(child_entities.iter().copied());
         }
     }
 }
