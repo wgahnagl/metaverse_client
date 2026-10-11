@@ -1,6 +1,6 @@
 use super::session::Mailbox;
 use crate::COORDINATE_CONVERSION;
-use crate::session::{RetryMessage, SendUIMessage};
+use crate::session::SendUIMessage;
 use actix::{AsyncContext, Handler, Message, WrapFuture};
 use benthic_protocol::messages::ui::camera_position::CameraPosition;
 use benthic_protocol::messages::ui::mesh_update::{MeshType, MeshUpdate};
@@ -47,6 +47,7 @@ impl Handler<AvatarObjectUpdate> for Mailbox {
         let avatar = Avatar::new(msg.id, msg.position);
         session.avatars.insert(msg.id, avatar.clone());
         let addr = ctx.address();
+        let current_outfit_id = session.inventory_data.current_outfit_root;
 
         if msg.id == session.agent_id {
             addr.do_send(SendUIMessage {
@@ -60,7 +61,11 @@ impl Handler<AvatarObjectUpdate> for Mailbox {
             ctx.spawn(
                 async move {
                     let (avatar, outfit_items) = if cache_enabled() {
-                        match cache.avatar.current_outfit(agent_id, inventory).await {
+                        match cache
+                            .avatar
+                            .current_outfit(agent_id, inventory, current_outfit_id)
+                            .await
+                        {
                             Ok(result) => result,
                             Err(e) => {
                                 error!("HandleNewAvatar error: {:?}", e);
@@ -68,7 +73,7 @@ impl Handler<AvatarObjectUpdate> for Mailbox {
                             }
                         }
                     } else {
-                        match inventory.get_current_outfit().await {
+                        match inventory.get_current_outfit(current_outfit_id).await {
                             Ok(outfit_items) => (None, outfit_items),
                             Err(e) => {
                                 error!("HandleNewAvatarError {:?}", e);
