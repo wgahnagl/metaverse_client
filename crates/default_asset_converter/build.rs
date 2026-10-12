@@ -204,7 +204,7 @@ fn load_gltf_animation(path: &PathBuf, axis_conversion: Mat4) -> AnimationClip {
                 None => continue,
             };
 
-            let joint_name = match JointName::resolve_joint_and_collision(node_name) {
+            let joint_name = match JointName::resolve_joint(node_name) {
                 Some(name) => name,
                 None => continue,
             };
@@ -349,11 +349,11 @@ fn bind_skeleton_from_gltf(document: &gltf::Document, axis_conversion: Mat4) -> 
 
         let node_global = parent_global * node_local;
 
-        match JointName::resolve_joint_name(name) {
+        match JointName::resolve_joint(name) {
             Some(joint_name) => {
                 *found_root_joint = true;
 
-                let key = SkinJoint::Joint(joint_name);
+                let key = joint_name;
 
                 // Express the transform relative to the actual parent joint.
                 // This bakes any skipped helper-node transforms into the local.

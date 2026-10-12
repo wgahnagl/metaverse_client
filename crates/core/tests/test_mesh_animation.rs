@@ -106,15 +106,12 @@ lazy_static! {
     ]);
 }
 
-fn generated_animation_path(name: &str) -> PathBuf {
-    let path = PathBuf::from("tests")
+fn generated_animation_dir(name: &str) -> PathBuf {
+    PathBuf::from("tests")
         .join("generated")
         .join(AGENT_ID.to_string())
-        .join("animation");
-
-    let final_path = path.join(name);
-    std::fs::create_dir_all(&final_path).unwrap();
-    final_path
+        .join("animation")
+        .join(name)
 }
 
 async fn load_animation(
@@ -131,11 +128,14 @@ async fn load_animation(
         sequence_id: 1,
     }];
 
+    let output_dir = generated_animation_dir("Retargeted");
+    std::fs::create_dir_all(&output_dir).unwrap();
+
     build_animation(
         animations,
         used_joints.clone(),
         target_skeleton.clone(),
-        generated_animation_path("Retargeted"),
+        output_dir,
         AGENT_ID,
     )
     .await
@@ -171,12 +171,13 @@ async fn build_test_animation() {
         anim_id: DefaultAnimation::Stand.uuid(),
         sequence_id: 1,
     }];
-
+    let output_dir = generated_animation_dir("Retargeted");
+    std::fs::create_dir_all(&output_dir).unwrap();
     let paths = build_animation(
         animations,
         artifacts.avatar_object.used_joints.clone(),
         artifacts.avatar_object.global_skeleton.clone(),
-        generated_animation_path("Retargeted"),
+        output_dir,
         AGENT_ID,
     )
     .await

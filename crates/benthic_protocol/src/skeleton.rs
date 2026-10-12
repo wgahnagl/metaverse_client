@@ -655,11 +655,12 @@ static QUATERNIUS_JOINT_ALIASES: Lazy<HashMap<&'static str, JointName>> = Lazy::
 });
 
 impl JointName {
-    pub fn resolve_joint_name(s: &str) -> Option<JointName> {
+    pub fn resolve_joint(s: &str) -> Option<SkinJoint> {
         QUATERNIUS_JOINT_ALIASES
             .get(s)
             .copied()
-            .or_else(|| JointName::from_str(s).ok())
+            .map(SkinJoint::Joint)
+            .or_else(|| JointName::resolve_joint_and_collision(s))
     }
 
     pub fn resolve_joint_and_collision(s: &str) -> Option<SkinJoint> {
@@ -667,15 +668,5 @@ impl JointName {
             .ok()
             .map(SkinJoint::Joint)
             .or_else(|| CollisionName::from_str(s).ok().map(SkinJoint::Collision))
-    }
-
-    pub fn from_str_non_bento(s: &str) -> Option<JointName> {
-        // Check BVH aliases
-        if let Some(j) = BVH_JOINT_ALIASES.get(s) {
-            return Some(*j);
-        }
-
-        // Fallback to enum’s own from_str
-        JointName::from_str(s).ok()
     }
 }
