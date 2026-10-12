@@ -36,7 +36,7 @@ pub struct Mesh {
     /// Data for rendering the lowest level of detail. This gives only a vague impression of the
     /// shape.
     pub lowest_level_of_detail: Option<Vec<MeshGeometry>>,
-    /// This is a physics representation that uses convex hull approximation for collision and
+    /// This is a physics representation that uses convex hull approximation for ollision and
     /// physics simulation.
     pub physics_convex: Option<Vec<u8>>,
     /// This is the skinning information, which tells the mesh how to deform based on the avatar's
@@ -554,7 +554,7 @@ impl Skin {
             .as_map()
             .ok_or_else(|| ParseError::missing_field("Expected top level map"))?;
 
-        // Parse joint_names (which includes collision joints)
+        // Parse joint_names (which includes deform joints)
         let joints: Vec<SkinJoint> = map
             .get("joint_names")
             .and_then(LLSDValue::as_array)
