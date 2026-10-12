@@ -6,11 +6,38 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub mod skin_joint_map {
+    use indexmap::IndexMap;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    use crate::skeleton::{Joint, SkinJoint};
+
+    pub fn serialize<S>(
+        joints: &IndexMap<SkinJoint, Joint>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        joints.iter().collect::<Vec<_>>().serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<IndexMap<SkinJoint, Joint>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let entries = Vec::<(SkinJoint, Joint)>::deserialize(deserializer)?;
+        Ok(entries.into_iter().collect())
+    }
+}
+
 /// Definitions for the avatar's skeleton  
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Skeleton {
     /// The joints that make up the skeleton
-    pub joints: IndexMap<JointName, Joint>,
+
+    #[serde(with = "skin_joint_map")]
+    pub joints: IndexMap<SkinJoint, Joint>,
     /// The root bone
     /// this can contain many joints, if the object has a partial skeleton.
     pub root: Vec<JointName>,
@@ -20,15 +47,15 @@ pub struct Skeleton {
 /// Defines the joint that makes up the skeleton
 pub struct Joint {
     /// The name of the joint
-    pub name: JointName,
+    pub name: SkinJoint,
     /// The global transforms applied to the joint
     pub global_transforms: Vec<Transform>,
     /// The transforms applied to the joint based on its parent and child relationship.
     pub local_transforms: Vec<Transform>,
     /// The position in the skeleton's vec of the joint's children
-    pub children: Vec<JointName>,
+    pub children: Vec<SkinJoint>,
     /// The position in the skeleton's vec of the joint's parent
-    pub parent: Option<JointName>,
+    pub parent: Option<SkinJoint>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,7 +81,20 @@ pub struct Transform {
     pub rank: usize,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, Copy)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    Copy,
+    Eq,
+    PartialEq,
+    Hash,
+    Display,
+    Ord,
+    PartialOrd,
+)]
 pub enum SkinJoint {
     #[default]
     None,
@@ -62,7 +102,20 @@ pub enum SkinJoint {
     Joint(JointName),
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, EnumString, Copy)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Hash,
+    Eq,
+    Default,
+    Serialize,
+    Deserialize,
+    EnumString,
+    Copy,
+    Ord,
+    PartialOrd,
+)]
 /// This is used to separate out the collision entities from the skeleton.
 /// These get passed in as joints, despite not being joints in the default skeleton.
 pub enum CollisionName {

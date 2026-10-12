@@ -69,5 +69,5 @@ pub struct AvatarObject {
     /// global skeleton that is applied to all objects in the outfit
     pub global_skeleton: Skeleton,
     /// List of joints used by the avatar
-    pub used_joints: BTreeSet<JointName>,
+    pub used_joints: BTreeSet<SkinJoint>,
 }
